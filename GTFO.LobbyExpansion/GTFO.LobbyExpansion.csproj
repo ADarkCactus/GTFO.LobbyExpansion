@@ -1,0 +1,77 @@
+﻿<Project Sdk="Microsoft.NET.Sdk" InitialTargets="ValidateGamePath">
+	<Import Project="$(MSBuildThisFileDirectory)\GameFolder.props" Condition="Exists('$(MSBuildThisFileDirectory)\GameFolder.props')" />
+
+	<Target Name="ValidateGamePath">
+		<Error Text="The GameFolder property must be set to the GTFO game folder." Condition="'$(GameFolder)' == '' or !Exists('$(GameFolder)')" />
+	</Target>
+
+	<PropertyGroup>
+		<!-- TargetFramework does not explicitly need to be 6, but it is recommended you keep 6 to match. -->
+		<TargetFramework>net6.0-windows</TargetFramework>
+		<AssemblyName>GTFO.LobbyExpansion</AssemblyName>
+		<LangVersion>latest</LangVersion>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<Nullable>enable</Nullable>
+		<PlatformTarget>x64</PlatformTarget>
+		<Platforms>x64</Platforms>
+		<Configurations>Debug;Release</Configurations>
+
+		<!-- Optional: Copy to BepInEx plugins folder after build. -->
+		<CopyToPluginFolder>true</CopyToPluginFolder>
+	</PropertyGroup>
+
+	<PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+		<DebugSymbols>true</DebugSymbols>
+		<DebugType>full</DebugType>
+		<Optimize>false</Optimize>
+		<DefineConstants>DEBUG;TRACE</DefineConstants>
+	</PropertyGroup>
+
+	<PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+		<DebugType>pdbonly</DebugType>
+		<Optimize>true</Optimize>
+		<DefineConstants>RELEASE</DefineConstants>
+	</PropertyGroup>
+
+	<!-- Optional: Strip PDB info from release builds. -->
+	<PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+		<DebugType>none</DebugType>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<BIECoreFolder>$(GameFolder)/BepInEx/core</BIECoreFolder>
+		<InteropFolder>$(GameFolder)/BepInEx/interop</InteropFolder>
+		<PluginsFolder>$(GameFolder)/BepInEx/plugins</PluginsFolder>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Reference Include="$(BIECoreFolder)/0Harmony.dll" Private="false" />
+		<Reference Include="$(BIECoreFolder)/BepInEx.*.dll" Private="false" />
+		<Reference Include="$(BIECoreFolder)/Il2CppInterop*.dll" Private="false" />
+		<Reference Include="$(BIECoreFolder)/SemanticVersioning.dll" Private="false" />
+		<Reference Include="$(BIECoreFolder)/MonoMod.RuntimeDetour.dll" Private="false" />
+
+		<Reference Include="$(InteropFolder)/*.dll" Private="false" />
+
+		<Reference Remove="$(InteropFolder)/Newtonsoft.Json.dll" />
+		<Reference Remove="$(InteropFolder)/netstandard.dll" />
+
+		<!-- Uncomment if using GTFO-API in the plugin. -->
+		<!-- <Reference Include="$(PluginsFolder)/GTFO-API.dll" Private="false" /> -->
+	</ItemGroup>
+
+<!--	<ItemGroup>-->
+<!--		&lt;!&ndash; Optional: Use auto-generated versioning info, but expose some extra metadata. &ndash;&gt;-->
+<!--		&lt;!&ndash; <PackageReference Include="VersionInfoGenerator" Version="2.1.3" /> &ndash;&gt;-->
+
+<!--		<PackageReference Include="Microsoft.Unity.Analyzers" Version="1.14.0">-->
+<!--			<PrivateAssets>all</PrivateAssets>-->
+<!--			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>-->
+<!--		</PackageReference>-->
+<!--	</ItemGroup>-->
+
+	<Target Name="CopyToGameFolder" AfterTargets="Build" Condition="$(CopyToPluginFolder) == 'true'">
+		<Message Importance="High" Text="Copying build to plugins folder ($(PluginsFolder))." />
+		<Copy SourceFiles="$(OutputPath)/$(AssemblyName).dll" DestinationFolder="$(PluginsFolder)" />
+	</Target>
+</Project>

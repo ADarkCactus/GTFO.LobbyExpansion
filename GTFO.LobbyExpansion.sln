@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34622.214
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GTFO.LobbyExpansion", "GTFO.LobbyExpansion\GTFO.LobbyExpansion.csproj", "{83A75E75-1476-449C-81B7-4F5EFF507FEC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{83A75E75-1476-449C-81B7-4F5EFF507FEC}.Debug|x64.ActiveCfg = Debug|x64
+		{83A75E75-1476-449C-81B7-4F5EFF507FEC}.Debug|x64.Build.0 = Debug|x64
+		{83A75E75-1476-449C-81B7-4F5EFF507FEC}.Release|x64.ActiveCfg = Release|x64
+		{83A75E75-1476-449C-81B7-4F5EFF507FEC}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C3EB67AA-FA60-413C-9C3B-B7E3CACE546D}
+	EndGlobalSection
+EndGlobal
