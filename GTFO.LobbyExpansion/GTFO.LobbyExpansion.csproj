@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk" InitialTargets="ValidateGamePath">
+<Project Sdk="Microsoft.NET.Sdk" InitialTargets="ValidateGamePath">
 	<Import Project="$(MSBuildThisFileDirectory)\GameFolder.props" Condition="Exists('$(MSBuildThisFileDirectory)\GameFolder.props')" />
 
 	<Target Name="ValidateGamePath">
@@ -18,7 +18,7 @@
 
 		<!-- Optional: Copy to BepInEx plugins folder after build. -->
 		<CopyToPluginFolder>true</CopyToPluginFolder>
-		<Version>1.0.1</Version>
+		<Version>1.0.2</Version>
 	</PropertyGroup>
 
 	<PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
