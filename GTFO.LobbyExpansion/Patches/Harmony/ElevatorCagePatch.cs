@@ -7,8 +7,11 @@ namespace GTFO.LobbyExpansion.Patches.Harmony;
 [HarmonyPatch(typeof(ElevatorCage))]
 public static class ElevatorCagePatch
 {
+    // Why do the empty return true prefixes exist? Catching exceptions to not cause infinite drop-in bug.
+
     [HarmonyPatch(nameof(ElevatorCage.SkipPreReleaseSequence))]
     [HarmonyPrefix]
+    [HarmonyWrapSafe]
     public static bool SkipPreReleaseSequence__Prefix(ElevatorCage __instance, CellSoundPlayer sound, ref int playerId)
     {
         L.LogExecutingMethod($"{nameof(playerId)}: {playerId}");
@@ -22,7 +25,7 @@ public static class ElevatorCagePatch
 
             for (var x = 0; x < original.Length; x++)
             {
-                var seat = x > 3 ? 0 : x;
+                var seat = x % 4; //x > 3 ? 0 : x;
                 __instance.m_seatsFromShaft[x] = original[seat];
             }
         }
@@ -45,6 +48,7 @@ public static class ElevatorCagePatch
 
     [HarmonyPatch(nameof(ElevatorCage.RegisterSpawnPoints))]
     [HarmonyPrefix]
+    [HarmonyWrapSafe]
     public static bool RegisterSpawnPoints__Prefix(ElevatorCage __instance)
     {
         L.LogExecutingMethod();
@@ -52,7 +56,7 @@ public static class ElevatorCagePatch
 
         for (var i = 0; i < PluginConfig.MaxPlayers; i++)
         {
-            var seat = i > 3 ? 0 : i;
+            var seat = i % 4; //i > 3 ? 0 : i;
             __instance.m_spawnPoints[i] = PlayerManager.RegisterSpawnpoint(
                 PlayerspawnpointType.StartInElevator,
                 i,
@@ -64,6 +68,7 @@ public static class ElevatorCagePatch
 
     [HarmonyPatch(nameof(ElevatorCage.PlaySeatOpenStraps))]
     [HarmonyPrefix]
+    [HarmonyWrapSafe]
     public static bool PlaySeatOpenStraps__Prefix(CellSoundPlayer sound, int playerId, bool isLocal)
     {
         if (playerId > 3)
