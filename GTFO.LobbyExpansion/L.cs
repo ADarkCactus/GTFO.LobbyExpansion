@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using BepInEx.Logging;
 
 namespace GTFO.LobbyExpansion;
@@ -26,6 +26,13 @@ internal static class L
         Warning("-------------- DEBUG WARNING --------------");
         Warning(Format(data));
         Warning("-------------------------------------------");
+#endif
+    }
+
+    internal static void Debug(object data)
+    {
+#if DEBUG
+        Logger.LogDebug(Format(data));
 #endif
     }
 

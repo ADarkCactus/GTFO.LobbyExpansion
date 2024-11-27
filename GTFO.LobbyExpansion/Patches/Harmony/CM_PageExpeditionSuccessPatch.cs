@@ -100,6 +100,12 @@ public static class CM_PageExpeditionSuccessPatch
             L.Verbose("Updating visible player reports.");
             UpdateVisiblePlayerReports(__instance);
         }
+
+        if (GameStateManager.Current.m_nextState != eGameStateName.ExpeditionSuccess)
+        {
+            switchbutton.SetVisible(false);
+        }
+        else switchbutton.SetVisible(true);
     }
 
     private static void UpdateVisiblePlayerReports(CM_PageExpeditionSuccess page)
@@ -137,5 +143,41 @@ public static class CM_PageExpeditionSuccessPatch
 
             page.m_playerReports[i].gameObject.SetActive(visible);
         }
+    }
+
+    public static string buttonLabel = "SWITCH LOBBIES";
+    public static Vector3 buttonPosition = new(350, -540, 50);
+    public static Vector3 buttonScale = new(0.5f, 0.5f, 0);
+    public static CM_Item switchbutton;
+
+    [HarmonyPatch(nameof(CM_PageExpeditionSuccess.Setup))]
+    [HarmonyPostfix]
+    public static void Setup__Postfix(CM_PageExpeditionSuccess __instance, MainMenuGuiLayer guiLayer)
+    {
+        // Why does this class use GuiAnchor.TopLeft and the other uses GuiAnchor.TopCenter?
+        var switchButton = __instance.m_guiLayer.AddRectComp(guiLayer.PageLoadout.m_readyButtonPrefab, GuiAnchor.TopLeft,
+            new Vector2(200f, 20f), __instance.m_btnLeaveExpedition.transform).TryCast<CM_Item>();
+        switchButton.SetText(buttonLabel);
+        switchButton.gameObject.transform.position = buttonPosition;
+        switchButton.gameObject.SetActive(true);
+        switchButton.SetVisible(true);
+
+        Action<int> value = delegate (int id)
+        {
+            var maxPageIndex = (int)Math.Ceiling(PluginConfig.MaxPlayers / 4.0d) - 1;
+            if (PageIndex == 0)
+            {
+                PageIndex += 1;
+                UpdateVisiblePlayerReports(__instance);
+            }
+            else if (PageIndex == 1)
+            {
+                PageIndex -= 1;
+                UpdateVisiblePlayerReports(__instance);
+            }
+        };
+        switchButton.OnBtnPressCallback += value;
+
+        switchbutton = switchButton;
     }
 }

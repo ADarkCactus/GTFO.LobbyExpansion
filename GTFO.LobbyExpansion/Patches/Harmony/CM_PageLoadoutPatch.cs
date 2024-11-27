@@ -153,6 +153,27 @@ public static class CM_PageLoadoutPatch
             L.Verbose("Updating visible pillars.");
             __instance!.ArrangePlayerPillarSpacing();
         }
+
+        if (!PlayfabMatchmakingManager.Current.IsMatchmakeInProgress)
+        {
+            bool isInLobby = SNet.IsInLobby;
+            if (isInLobby)
+            {
+                if (!GameStateManager.IsReady)
+                {
+                    switchbutton.SetVisible(true);
+                }
+                else
+                {
+                    switchbutton.SetVisible(false);
+                }
+            }
+        }
+
+        if (GameStateManager.Current.m_nextState == eGameStateName.InLevel)
+        {
+            switchbutton.SetVisible(true);
+        }
     }
 
     [HarmonyPatch(nameof(CM_PageLoadout.ApplyPlayerSlotPermissionsFromSettings))]
@@ -193,5 +214,44 @@ public static class CM_PageLoadoutPatch
     {
         L.LogExecutingMethod();
         PageIndex = 0;
+    }
+
+    public static string buttonLabel = "SWITCH LOBBIES";
+    public static Vector3 buttonPosition = new(450, -600, 50);
+    public static Vector3 buttonScale = new(0.5f, 0.5f, 0);
+    public static CM_Item switchbutton;
+
+    [HarmonyPatch(nameof(CM_PageLoadout.Setup))]
+    [HarmonyPostfix]
+    public static void Setup__Postfix(CM_PageLoadout __instance, MainMenuGuiLayer guiLayer)
+    {
+        if (CM_PageLoadout.Current != null)
+        {
+            // Why does this class use GuiAnchor.TopCenter and the other uses GuiAnchor.TopLeft?
+            var switchButton = __instance.m_guiLayer.AddRectComp(__instance.m_readyButtonPrefab, GuiAnchor.TopCenter,
+                new Vector2(200f, 20f), __instance.m_readyButtonAlign).TryCast<CM_Item>();
+            switchButton.SetText(buttonLabel);
+            switchButton.gameObject.transform.position = buttonPosition;
+            switchButton.gameObject.SetActive(true);
+            switchButton.SetVisible(!GameStateManager.IsReady);
+
+            Action<int> value = delegate (int id)
+            {
+                var maxPageIndex = (int)Math.Ceiling(PluginConfig.MaxPlayers / 4.0d) - 1;
+                if (PageIndex == 0)
+                {
+                    PageIndex += 1;
+                    __instance!.ArrangePlayerPillarSpacing();
+                }
+                else if (PageIndex == 1)
+                {
+                    PageIndex -= 1;
+                    __instance!.ArrangePlayerPillarSpacing();
+                }
+            };
+            switchButton.OnBtnPressCallback += value;
+
+            switchbutton = switchButton;
+        }
     }
 }
