@@ -148,7 +148,7 @@ public static class CM_PageExpeditionSuccessPatch
     public static string buttonLabel = "SWITCH LOBBIES";
     public static Vector3 buttonPosition = new(350, -540, 50);
     public static Vector3 buttonScale = new(0.5f, 0.5f, 0);
-    public static CM_Item switchbutton;
+    public static CM_Item switchbutton = null!;
 
     [HarmonyPatch(nameof(CM_PageExpeditionSuccess.Setup))]
     [HarmonyPostfix]
@@ -156,7 +156,8 @@ public static class CM_PageExpeditionSuccessPatch
     {
         // Why does this class use GuiAnchor.TopLeft and the other uses GuiAnchor.TopCenter?
         var switchButton = __instance.m_guiLayer.AddRectComp(guiLayer.PageLoadout.m_readyButtonPrefab, GuiAnchor.TopLeft,
-            new Vector2(200f, 20f), __instance.m_btnLeaveExpedition.transform).TryCast<CM_Item>();
+            new Vector2(200f, 20f), __instance.m_btnLeaveExpedition.transform).Cast<CM_Item>();
+
         switchButton.SetText(buttonLabel);
         switchButton.gameObject.transform.position = buttonPosition;
         switchButton.gameObject.SetActive(true);
