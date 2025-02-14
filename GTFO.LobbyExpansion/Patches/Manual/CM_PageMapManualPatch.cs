@@ -93,6 +93,14 @@ public class CM_PageMapManualPatch : ManualPatch
             },
             new Patch
             {
+                Method = nameof(CM_PageMap.Update),
+                Description = "Adjust CM_PageMap::UpdateSyncedCursorVisibility() (Inlined into Update()!) for (int i = 0; i < 4; i++) to new max players.",
+                Pattern = "83 FB 04 0F 8C 55 FF FF FF",
+                Offset = 2,
+                Bytes = [PluginConfig.MaxPlayers]
+            },
+            new Patch
+            {
                 Method = nameof(CM_PageMap.SetPageActive),
                 Description = "Adjust CM_PageMap::SetPageActive() m_playerIsDrawing = new bool[4] to new max players.",
                 Pattern = "BA 04 00 00 00 E8 ?? ?? ?? ?? 48 8D 8B 60 02 00 00",
