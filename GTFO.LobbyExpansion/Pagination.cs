@@ -43,7 +43,7 @@ public class Pagination
         return false;
     }
 
-    public static int GetLocalPlayerPageIndex()
+    public static int GetLocalPlayerPageIndexFromPillar()
     {
         foreach (var lobbyBar in CM_PageLoadout.Current.m_playerLobbyBars)
         {
@@ -54,6 +54,11 @@ public class Pagination
         }
 
         return 0;
+    }
+
+    public static int GetLocalPlayerPageFromSlotIndex()
+    {
+        return GetPageFromSlotIndex(SNetwork.SNet.LocalPlayer.PlayerSlot.index);
     }
 
     public static int GetPageFromSlotIndex(int slotIndex)

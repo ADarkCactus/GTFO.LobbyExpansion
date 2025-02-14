@@ -233,7 +233,7 @@ public static class CM_PageLoadoutPatch
 
             _centerButton.OnBtnPressCallback = new Action<int>(_ =>
             {
-                var localPlayerPageIndex = Pagination.GetLocalPlayerPageIndex();
+                var localPlayerPageIndex = Pagination.GetLocalPlayerPageIndexFromPillar();
 
                 if (_pagination.PageIndex != localPlayerPageIndex)
                 {
