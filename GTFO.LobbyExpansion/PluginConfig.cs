@@ -12,6 +12,12 @@ public static class PluginConfig
         return SNet_PlayerSlotManager.SlotPermission.Human;
     }
 
+    public static void SetExtraLobbySlotPermissions(int slotIndex, SNet_PlayerSlotManager.SlotPermission permission)
+    {
+        L.Warning($"SetExtraLobbySlotPermissions called: slotIndex:{slotIndex}, SlotPermission:{permission}");
+        // TODO: Implement this
+    }
+
     public static string GetExtraSlotNickname(int characterIndex)
     {
         return characterIndex switch

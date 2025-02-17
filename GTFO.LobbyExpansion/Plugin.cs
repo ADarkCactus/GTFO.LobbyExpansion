@@ -47,7 +47,8 @@ public class Plugin : BasePlugin
                 new PlayerSessionStatusManagerManualPatch(),
                 new PlayerVoiceManagerManualPatch(),
                 new SNet_PlayerSlotManagerManualPatch(),
-                new SNet_SyncManagerManualPatch()
+                new SNet_SyncManagerManualPatch(),
+                new CM_PageLoadoutDisplayClassManualPatch()
             };
 
             foreach (var patch in manualPatches)
