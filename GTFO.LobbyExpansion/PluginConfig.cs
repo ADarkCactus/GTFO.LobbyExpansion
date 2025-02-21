@@ -58,6 +58,7 @@ public static class PluginConfig
             return;
         }
 
+        L.Info($"Loaded custom player count from config file: {MaxPlayers} (default) -> {_configPlayerCount.MaxPlayers} (config)");
         MaxPlayers = _configPlayerCount.MaxPlayers;
     }
 
