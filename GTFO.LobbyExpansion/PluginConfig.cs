@@ -62,7 +62,7 @@ public static class PluginConfig
         MaxPlayers = _configPlayerCount.MaxPlayers;
     }
 
-    internal static void SaveUserData()
+    private static void SaveUserData()
     {
         var json = JsonSerializer.Serialize(_configUserData, _serializerOptions);
         File.WriteAllText(_configPathUserData, json);
@@ -73,9 +73,10 @@ public static class PluginConfig
         return _configUserData.SlotPermissions!.GetValueOrDefault(slotIndex, SNet_PlayerSlotManager.SlotPermission.Human);
     }
 
-    public static void SetExtraLobbySlotPermissions(int slotIndex, SNet_PlayerSlotManager.SlotPermission permission)
+    public static void SetExtraLobbySlotPermissions(int slotIndexMinusOne, SNet_PlayerSlotManager.SlotPermission permission)
     {
-        L.Warning($"SetExtraLobbySlotPermissions called: slotIndex:{slotIndex}, SlotPermission:{permission}");
+        var slotIndex = slotIndexMinusOne + 1; // Game ignores local player => saves 0, 1, 2 for bots
+        L.Info($"SetExtraLobbySlotPermissions called: slotIndex:{slotIndex}, SlotPermission:{permission}");
         _configUserData.SlotPermissions![slotIndex] = permission;
         SaveUserData();
     }
