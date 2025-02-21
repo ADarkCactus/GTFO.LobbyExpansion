@@ -1,25 +1,95 @@
+using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
 using SNetwork;
 
 namespace GTFO.LobbyExpansion;
 
 public static class PluginConfig
 {
-    public static readonly byte MaxPlayers = 8;
+    public const byte DEFAULT_MAX_PLAYERS = 8;
+    private const string CONFIG_FILE_NAME = $"{nameof(LobbyExpansionConfig)}.json";
+    private const string USER_CONFIG_FILE_NAME = $"{nameof(LobbyExpansionConfig)}_UserData.json";
+
+    private static readonly JsonSerializerOptions _serializerOptions = new()
+    {
+        WriteIndented = true,
+    };
+
+    private static readonly string _configPath = Path.Combine(BepInEx.Paths.ConfigPath, CONFIG_FILE_NAME);
+    private static readonly string _configPathUserData = Path.Combine(BepInEx.Paths.ConfigPath, USER_CONFIG_FILE_NAME);
+
+    internal static byte MaxPlayers = DEFAULT_MAX_PLAYERS;
+
+    private static LobbyExpansionPlayerCount _configPlayerCount = new();
+    private static LobbyExpansionConfig _configUserData = new();
+
+    internal static void Load()
+    {
+        LoadCustomPlayerCount();
+
+        if (!File.Exists(_configPathUserData))
+        {
+            SaveUserData();
+        }
+
+        var json = File.ReadAllText(_configPathUserData);
+        _configUserData = JsonSerializer.Deserialize<LobbyExpansionConfig>(json, _serializerOptions) ?? new();
+
+        _configUserData.SlotPermissions ??= new();
+        _configUserData.CustomExtraBotNames ??= new();
+    }
+
+    private static void LoadCustomPlayerCount()
+    {
+        if (!File.Exists(_configPath))
+        {
+            return; // Do we even want/need to write this file?
+            //File.WriteAllText(_configPath, JsonSerializer.Serialize(_configPlayerCount));
+        }
+
+        var json = File.ReadAllText(_configPath);
+        _configPlayerCount = JsonSerializer.Deserialize<LobbyExpansionPlayerCount>(json, _serializerOptions) ?? new();
+
+        if (_configPlayerCount.MaxPlayers < 4)
+        {
+            L.Error("ConfigFile: MaxPlayers must be greater or equal to '4'!");
+            MaxPlayers = DEFAULT_MAX_PLAYERS;
+            return;
+        }
+
+        MaxPlayers = _configPlayerCount.MaxPlayers;
+    }
+
+    internal static void SaveUserData()
+    {
+        var json = JsonSerializer.Serialize(_configUserData, _serializerOptions);
+        File.WriteAllText(_configPathUserData, json);
+    }
 
     public static SNet_PlayerSlotManager.SlotPermission GetExtraSlotPermission(int slotIndex)
     {
-        // Probably worth making this a setting instead of people having to reset it every time.
-        return SNet_PlayerSlotManager.SlotPermission.Human;
+        return _configUserData.SlotPermissions!.GetValueOrDefault(slotIndex, SNet_PlayerSlotManager.SlotPermission.Human);
     }
 
     public static void SetExtraLobbySlotPermissions(int slotIndex, SNet_PlayerSlotManager.SlotPermission permission)
     {
         L.Warning($"SetExtraLobbySlotPermissions called: slotIndex:{slotIndex}, SlotPermission:{permission}");
-        // TODO: Implement this
+        _configUserData.SlotPermissions![slotIndex] = permission;
+        SaveUserData();
     }
 
     public static string GetExtraSlotNickname(int characterIndex)
     {
+        var index = characterIndex - 4;
+
+        if (_configUserData.CustomExtraBotNames!.Count > 0 && index < _configUserData.CustomExtraBotNames.Count)
+        {
+            var name = _configUserData.CustomExtraBotNames[index];
+            if (!string.IsNullOrWhiteSpace(name))
+                return name;
+        }
+
         return characterIndex switch
         {
             4 => "Schaeffer",
