@@ -46,10 +46,10 @@ public static class CM_PageMapPatch
 
             _buttonCenter = CoolButton.InstantiateSquareButton(pageButtonRoot.transform, Vector3.zero);
 
-            _buttonPageDown = CoolButton.InstantiateSquareButton(pageButtonRoot.transform, new Vector3(-40, -160, 0), hideText: true, displayArrow: true, flipArrow: true);
+            _buttonPageDown = CoolButton.InstantiateSquareButton(pageButtonRoot.transform, new Vector3(-40, 80, 0), hideText: true, displayArrow: true);
             _buttonPageDown.transform.localRotation = Quaternion.Euler(0, 0, 90);
 
-            _buttonPageUp = CoolButton.InstantiateSquareButton(pageButtonRoot.transform, new Vector3(-40, 80, 0), hideText: true, displayArrow: true);
+            _buttonPageUp = CoolButton.InstantiateSquareButton(pageButtonRoot.transform, new Vector3(-40, -160, 0), hideText: true, displayArrow: true, flipArrow: true);
             _buttonPageUp.transform.localRotation = Quaternion.Euler(0, 0, 90);
 
             UpdateCustomButtons();
