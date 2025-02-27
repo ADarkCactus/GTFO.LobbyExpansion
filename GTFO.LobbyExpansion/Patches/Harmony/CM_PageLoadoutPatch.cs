@@ -1,16 +1,19 @@
+using System.Linq;
+using BepInEx.Unity.IL2CPP.Utils.Collections;
 using CellMenu;
+using GTFO.LobbyExpansion.Util;
 using HarmonyLib;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using SNetwork;
+using TMPro;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace GTFO.LobbyExpansion.Patches.Harmony;
 
 [HarmonyPatch(typeof(CM_PageLoadout))]
 public static class CM_PageLoadoutPatch
 {
-    public static int PageIndex { get; set; }
-
     [HarmonyPatch(nameof(CM_PageLoadout.Setup))]
     [HarmonyPrefix]
     public static bool Setup__Prefix(CM_PageLoadout __instance, MainMenuGuiLayer guiLayer)
@@ -57,7 +60,7 @@ public static class CM_PageLoadoutPatch
     [HarmonyPostfix]
     public static void ArrangePlayerPillarSpacing__Postfix(CM_PageLoadout __instance)
     {
-        L.LogExecutingMethod();
+        //L.LogExecutingMethod();
         var originalPositions = new[]
         {
             __instance.m_playerInfoHolders[0].transform.position,
@@ -69,7 +72,7 @@ public static class CM_PageLoadoutPatch
         for (var i = 4; i < PluginConfig.MaxPlayers; i++)
         {
             var rootName = $"Player{i + 1}Root";
-            L.Verbose($"Updating extra player root position ({rootName}).");
+            //L.Verbose($"Updating extra player root position ({rootName}).");
             var originalPillarAtIndex = __instance!.m_playerInfoHolders[i % 4];
             __instance.m_playerInfoHolders[i].transform.position = originalPillarAtIndex.position;
             __instance.m_playerInfoHolders[i].transform.localPosition = originalPillarAtIndex.localPosition;
@@ -77,7 +80,7 @@ public static class CM_PageLoadoutPatch
         }
 
         // Only show the lobby bars that we're currently viewing
-        var minVisibleIndex = PageIndex * 4;
+        var minVisibleIndex = _pagination.PageIndex * 4;
         var maxVisibleIndex = Math.Min(minVisibleIndex + 4, PluginConfig.MaxPlayers);
 
         for (var i = 0; i < __instance.m_playerInfoHolders.Count; i++)
@@ -88,14 +91,14 @@ public static class CM_PageLoadoutPatch
 
             if (i < minVisibleIndex)
             {
-                L.Verbose($"Hiding lobby bar at slot {i} since it is below the minimum visible index {minVisibleIndex}.");
+                //L.Verbose($"Hiding lobby bar at slot {i} since it is below the minimum visible index {minVisibleIndex}.");
                 __instance.m_playerInfoHolders[i].gameObject.transform.position = new Vector3(5000, 5000, 5000);
                 continue;
             }
 
             if (i >= maxVisibleIndex)
             {
-                L.Verbose($"Hiding lobby bar at slot {i} since it is above the maximum visible index {maxVisibleIndex}.");
+                //L.Verbose($"Hiding lobby bar at slot {i} since it is above the maximum visible index {maxVisibleIndex}.");
                 __instance.m_playerInfoHolders[i].gameObject.transform.position = new Vector3(5000, 5000, 5000);
                 continue;
             }
@@ -104,75 +107,25 @@ public static class CM_PageLoadoutPatch
         }
     }
 
-    private static bool _pageDownDebounce;
-    private static bool _pageUpDebounce;
+    public static void UpdatePlayerPillars()
+    {
+        CM_PageLoadout.Current.ArrangePlayerPillarSpacing();
+    }
 
     [HarmonyPatch(nameof(CM_PageLoadout.Update))]
     [HarmonyPostfix]
     public static void Update__Postfix(CM_PageLoadout __instance)
     {
-        var updateVisiblePillars = false;
-        var maxPageIndex = (int)Math.Ceiling(PluginConfig.MaxPlayers / 4.0d) - 1;
-
-        if (PageIndex < maxPageIndex)
+        if (Input.GetKeyDown(KeyCode.PageDown))
         {
-            if (!_pageDownDebounce && Input.GetKeyDown(KeyCode.PageDown))
-            {
-                L.Verbose($"Showing next set of players {PageIndex}.");
-                PageIndex += 1;
-                _pageDownDebounce = true;
-                updateVisiblePillars = true;
-            }
+            if (_pagination.PageDown())
+                UpdateCustomButtons();
         }
 
-        if (_pageDownDebounce && Input.GetKeyUp(KeyCode.PageDown))
+        if (Input.GetKeyDown(KeyCode.PageUp))
         {
-            L.Verbose("Debounce off for page down.");
-            _pageDownDebounce = false;
-        }
-
-        if (PageIndex > 0)
-        {
-            if (!_pageUpDebounce && Input.GetKeyDown(KeyCode.PageUp))
-            {
-                L.Verbose($"Showing previous set of players {PageIndex}.");
-                PageIndex -= 1;
-                _pageUpDebounce = true;
-                updateVisiblePillars = true;
-            }
-        }
-
-        if (_pageUpDebounce && Input.GetKeyUp(KeyCode.PageUp))
-        {
-            L.Verbose("Debounce off for page up.");
-            _pageUpDebounce = false;
-        }
-
-        if (updateVisiblePillars)
-        {
-            L.Verbose("Updating visible pillars.");
-            __instance!.ArrangePlayerPillarSpacing();
-        }
-
-        if (!PlayfabMatchmakingManager.Current.IsMatchmakeInProgress)
-        {
-            bool isInLobby = SNet.IsInLobby;
-            if (isInLobby)
-            {
-                if (!GameStateManager.IsReady)
-                {
-                    switchbutton.SetVisible(true);
-                }
-                else
-                {
-                    switchbutton.SetVisible(false);
-                }
-            }
-        }
-
-        if (GameStateManager.Current.m_nextState == eGameStateName.InLevel)
-        {
-            switchbutton.SetVisible(true);
+            if (_pagination.PageUp())
+                UpdateCustomButtons();
         }
     }
 
@@ -213,45 +166,96 @@ public static class CM_PageLoadoutPatch
     public static void OnDisable__Postfix()
     {
         L.LogExecutingMethod();
-        PageIndex = 0;
+        //PageIndex = 0;
     }
 
-    public static string buttonLabel = "SWITCH LOBBIES";
-    public static Vector3 buttonPosition = new(450, -600, 50);
-    public static Vector3 buttonScale = new(0.5f, 0.5f, 0);
-    public static CM_Item switchbutton;
+    private static CM_Item _centerButton = null!;
+    private static CM_Item _buttonPageDown = null!;
+    private static CM_Item _buttonPageUp = null!;
+
+    private static void UpdateCustomButtons()
+    {
+        var canPageDown = _pagination.CanPageDown();
+        var canPageUp = _pagination.CanPageUp();
+
+        _buttonPageDown.SetCoolButtonEnabled(canPageDown);
+        _buttonPageUp.SetCoolButtonEnabled(canPageUp);
+
+        _centerButton.SetText($"<color=white>P{_pagination.PageIndex + 1}</color>");
+    }
+
+    private const string DECOR_TEXT = "//: Lobby Page Switcher";
+
+    private static readonly Pagination _pagination = new();
+
+    private static void OnPageChanged()
+    {
+        UpdatePlayerPillars();
+    }
 
     [HarmonyPatch(nameof(CM_PageLoadout.Setup))]
     [HarmonyPostfix]
     public static void Setup__Postfix(CM_PageLoadout __instance, MainMenuGuiLayer guiLayer)
     {
-        if (CM_PageLoadout.Current != null)
+        if (CM_PageLoadout.Current == null)
+            return;
+
+        _pagination.OnPageChanged += OnPageChanged;
+
+        CoolButton.Setup(__instance);
+
+        // You might ask yourself, "Why do we wait here for a frame instead of doing things immediately?"
+        // Well, you see, *IL2CPP moment* :sunglasses:
+        // (Can't instantiate a freshly created prefab, else destroyed things persist and values aren't set properly)
+        CoroutineManager.StartCoroutine(CoroutineHelpers.NextFrame(() =>
         {
-            // Why does this class use GuiAnchor.TopCenter and the other uses GuiAnchor.TopLeft?
-            var switchButton = __instance.m_guiLayer.AddRectComp(__instance.m_readyButtonPrefab, GuiAnchor.TopCenter,
-                new Vector2(200f, 20f), __instance.m_readyButtonAlign).TryCast<CM_Item>();
-            switchButton.SetText(buttonLabel);
-            switchButton.gameObject.transform.position = buttonPosition;
-            switchButton.gameObject.SetActive(true);
-            switchButton.SetVisible(!GameStateManager.IsReady);
+            var switcherHolder = new GameObject("LobbySwitcherHolder");
 
-            Action<int> value = delegate (int id)
+            var switcherTrans = switcherHolder.transform;
+            switcherTrans.SetParent(__instance.m_readyButtonAlign.parent);
+            switcherTrans.localPosition = __instance.m_readyButtonAlign.localPosition + new Vector3(0, 1150, 0);
+            switcherTrans.localScale = Vector3.one * 0.9f;
+
+            var decor = __instance.m_readyButtonAlign.Find("DecorText");
+            decor = Object.Instantiate(decor, switcherTrans);
+            decor.transform.localPosition = new Vector3(100, 0, 0);
+            decor.transform.localScale = Vector3.one;
+            decor.gameObject.SetActive(true);
+            decor.GetComponent<TextMeshPro>().SetText(DECOR_TEXT);
+
+            _centerButton = CoolButton.InstantiateSquareButton(switcherTrans, Vector3.zero);
+
+            _buttonPageDown = CoolButton.InstantiateSquareButton(switcherTrans, new Vector3(-110, 0, 0), displayArrow: true, hideText: true, flipArrow: true);
+
+            _buttonPageUp = CoolButton.InstantiateSquareButton(switcherTrans, new Vector3(110, 0, 0), displayArrow: true, hideText: true, flipArrow: false);
+
+            UpdateCustomButtons();
+
+            _centerButton.OnBtnPressCallback = new Action<int>(_ =>
             {
-                var maxPageIndex = (int)Math.Ceiling(PluginConfig.MaxPlayers / 4.0d) - 1;
-                if (PageIndex == 0)
-                {
-                    PageIndex += 1;
-                    __instance!.ArrangePlayerPillarSpacing();
-                }
-                else if (PageIndex == 1)
-                {
-                    PageIndex -= 1;
-                    __instance!.ArrangePlayerPillarSpacing();
-                }
-            };
-            switchButton.OnBtnPressCallback += value;
+                var localPlayerPageIndex = Pagination.GetLocalPlayerPageIndexFromPillar();
 
-            switchbutton = switchButton;
-        }
+                if (_pagination.PageIndex != localPlayerPageIndex)
+                {
+                    _pagination.PageIndex = localPlayerPageIndex;
+                    UpdatePlayerPillars();
+                }
+
+                UpdateCustomButtons();
+            });
+
+            _buttonPageDown.OnBtnPressCallback = new Action<int>(_ =>
+            {
+                _pagination.PageDown();
+                UpdateCustomButtons();
+            });
+
+            _buttonPageUp.OnBtnPressCallback = new Action<int>(_ =>
+            {
+                _pagination.PageUp();
+                UpdateCustomButtons();
+            });
+
+        }).WrapToIl2Cpp());
     }
 }

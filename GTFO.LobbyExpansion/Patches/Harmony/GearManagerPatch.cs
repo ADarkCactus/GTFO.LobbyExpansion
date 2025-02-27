@@ -17,101 +17,49 @@ public static class GearManagerPatch
 
         var data = GearManager.BotFavoritesData;
 
-        // god this is REALLY ugly
+        var gearMelee = data.LastEquipped_Melee;
+        if (Expand(ref gearMelee))
+            data.LastEquipped_Melee = gearMelee;
 
-        if (data.LastEquipped_Melee.Length < PluginConfig.MaxPlayers)
+        var gearStandard = data.LastEquipped_Standard;
+        if (Expand(ref gearStandard))
+            data.LastEquipped_Standard = gearStandard;
+
+        var gearSpecial = data.LastEquipped_Special;
+        if (Expand(ref gearSpecial))
+            data.LastEquipped_Special = gearSpecial;
+
+        var gearClass = data.LastEquipped_Class;
+        if (Expand(ref gearClass))
+            data.LastEquipped_Class = gearClass;
+
+        var hackingTool = data.LastEquipped_HackingTool;
+        if (Expand(ref hackingTool))
+            data.LastEquipped_HackingTool = hackingTool;
+    }
+
+    private static bool Expand(ref Il2CppStringArray original)
+    {
+        if (original.Length >= PluginConfig.MaxPlayers)
         {
-            var orig = data.LastEquipped_Melee;
-            var updated = new Il2CppStringArray(PluginConfig.MaxPlayers);
-
-            for (var i = 0; i < updated.Length; i++)
-            {
-                if (i < orig.Length)
-                {
-                    updated[i] = orig[i];
-                    continue;
-                }
-
-                updated[i] = "";
-            }
-
-            data.LastEquipped_Melee = updated;
+            return false;
         }
 
-        if (data.LastEquipped_Standard.Length < PluginConfig.MaxPlayers)
+        var orig = original;
+        var updated = new Il2CppStringArray(PluginConfig.MaxPlayers);
+
+        for (var i = 0; i < updated.Length; i++)
         {
-            var orig = data.LastEquipped_Standard;
-            var updated = new Il2CppStringArray(PluginConfig.MaxPlayers);
-
-            for (var i = 0; i < updated.Length; i++)
+            if (i < orig.Length)
             {
-                if (i < orig.Length)
-                {
-                    updated[i] = orig[i];
-                    continue;
-                }
-
-                updated[i] = "";
+                updated[i] = orig[i];
+                continue;
             }
 
-            data.LastEquipped_Standard = updated;
+            updated[i] = string.Empty;
         }
 
-        if (data.LastEquipped_Special.Length < PluginConfig.MaxPlayers)
-        {
-            var orig = data.LastEquipped_Special;
-            var updated = new Il2CppStringArray(PluginConfig.MaxPlayers);
-
-            for (var i = 0; i < updated.Length; i++)
-            {
-                if (i < orig.Length)
-                {
-                    updated[i] = orig[i];
-                    continue;
-                }
-
-                updated[i] = "";
-            }
-
-            data.LastEquipped_Special = updated;
-        }
-
-        if (data.LastEquipped_Class.Length < PluginConfig.MaxPlayers)
-        {
-            var orig = data.LastEquipped_Class;
-            var updated = new Il2CppStringArray(PluginConfig.MaxPlayers);
-
-            for (var i = 0; i < updated.Length; i++)
-            {
-                if (i < orig.Length)
-                {
-                    updated[i] = orig[i];
-                    continue;
-                }
-
-                updated[i] = "";
-            }
-
-            data.LastEquipped_Class = updated;
-        }
-
-        if (data.LastEquipped_HackingTool.Length < PluginConfig.MaxPlayers)
-        {
-            var orig = data.LastEquipped_HackingTool;
-            var updated = new Il2CppStringArray(PluginConfig.MaxPlayers);
-
-            for (var i = 0; i < updated.Length; i++)
-            {
-                if (i < orig.Length)
-                {
-                    updated[i] = orig[i];
-                    continue;
-                }
-
-                updated[i] = "";
-            }
-
-            data.LastEquipped_HackingTool = updated;
-        }
+        original = updated;
+        return true;
     }
 }

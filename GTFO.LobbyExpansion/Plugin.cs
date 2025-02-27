@@ -16,6 +16,17 @@ public class Plugin : BasePlugin
     {
         try
         {
+            PluginConfig.Load();
+        }
+        catch (Exception e)
+        {
+            L.Error("Failed to load plugin config?!");
+            L.Error($"{e.GetType().Name}: {e.Message}");
+            L.Warning($"StackTrace:\n{e.StackTrace}");
+        }
+
+        try
+        {
 #if DEBUG
             // TODO: Remove this later, just helps find it easier in BepInEx console
             L.Warning("------------------------------------------------------");
@@ -47,7 +58,8 @@ public class Plugin : BasePlugin
                 new PlayerSessionStatusManagerManualPatch(),
                 new PlayerVoiceManagerManualPatch(),
                 new SNet_PlayerSlotManagerManualPatch(),
-                new SNet_SyncManagerManualPatch()
+                new SNet_SyncManagerManualPatch(),
+                new CM_PageLoadoutDisplayClassManualPatch()
             };
 
             foreach (var patch in manualPatches)

@@ -1,4 +1,6 @@
+using BepInEx.Unity.IL2CPP.Utils.Collections;
 using CellMenu;
+using GTFO.LobbyExpansion.Util;
 using HarmonyLib;
 using SNetwork;
 using UnityEngine;
@@ -8,11 +10,8 @@ namespace GTFO.LobbyExpansion.Patches.Harmony;
 [HarmonyPatch(typeof(CM_PageExpeditionSuccess))]
 public static class CM_PageExpeditionSuccessPatch
 {
-    private static bool _pageDownDebounce;
-    private static bool _pageUpDebounce;
     private static bool _needPositionUpdate;
     private static DateTime _lastVisibilityUpdate = DateTime.Now;
-    public static int PageIndex { get; set; }
 
     // [HarmonyPatch(nameof(CM_PageExpeditionSuccess.OnEnable))]
     // [HarmonyPrefix]
@@ -26,7 +25,8 @@ public static class CM_PageExpeditionSuccessPatch
     public static void OnEnable__Postfix(CM_PageExpeditionSuccess __instance)
     {
         L.LogExecutingMethod();
-        PageIndex = 0;
+        _pagination.PageIndex = 0;
+        UpdateCustomButtons();
         _needPositionUpdate = true;
         UpdateVisiblePlayerReports(__instance);
     }
@@ -58,54 +58,15 @@ public static class CM_PageExpeditionSuccessPatch
             UpdateVisiblePlayerReports(__instance);
         }
 
-        var updateVisibility = false;
-        var maxPageIndex = (int)Math.Ceiling(PluginConfig.MaxPlayers / 4.0d) - 1;
-
-        if (PageIndex < maxPageIndex)
+        if (Input.GetKeyDown(KeyCode.PageDown))
         {
-            if (!_pageDownDebounce && Input.GetKeyDown(KeyCode.PageDown))
-            {
-                L.Verbose($"Showing next set of players {PageIndex}.");
-                PageIndex += 1;
-                _pageDownDebounce = true;
-                updateVisibility = true;
-            }
+            _pagination.PageDown();
         }
 
-        if (_pageDownDebounce && Input.GetKeyUp(KeyCode.PageDown))
+        if (Input.GetKeyDown(KeyCode.PageUp))
         {
-            L.Verbose("Debounce off for page down.");
-            _pageDownDebounce = false;
+            _pagination.PageUp();
         }
-
-        if (PageIndex > 0)
-        {
-            if (!_pageUpDebounce && Input.GetKeyDown(KeyCode.PageUp))
-            {
-                L.Verbose($"Showing previous set of players {PageIndex}.");
-                PageIndex -= 1;
-                _pageUpDebounce = true;
-                updateVisibility = true;
-            }
-        }
-
-        if (_pageUpDebounce && Input.GetKeyUp(KeyCode.PageUp))
-        {
-            L.Verbose("Debounce off for page up.");
-            _pageUpDebounce = false;
-        }
-
-        if (updateVisibility)
-        {
-            L.Verbose("Updating visible player reports.");
-            UpdateVisiblePlayerReports(__instance);
-        }
-
-        if (GameStateManager.Current.m_nextState != eGameStateName.ExpeditionSuccess)
-        {
-            switchbutton.SetVisible(false);
-        }
-        else switchbutton.SetVisible(true);
     }
 
     private static void UpdateVisiblePlayerReports(CM_PageExpeditionSuccess page)
@@ -115,7 +76,7 @@ public static class CM_PageExpeditionSuccessPatch
 
         // Only show the lobby bars that we're currently viewing
         var playerSlots = SNet.Slots.PlayerSlots;
-        var minVisibleIndex = PageIndex * 4;
+        var minVisibleIndex = _pagination.PageIndex * 4;
         var maxVisibleIndex = Math.Min(minVisibleIndex + 4, PluginConfig.MaxPlayers);
 
         for (var i = 0; i < page.m_playerReports.Count; i++)
@@ -127,17 +88,17 @@ public static class CM_PageExpeditionSuccessPatch
 
             if (i < minVisibleIndex)
             {
-                L.Verbose($"Hiding lobby bar at slot {i} since it is below the minimum visible index {minVisibleIndex}.");
+                //L.Verbose($"Hiding lobby bar at slot {i} since it is below the minimum visible index {minVisibleIndex}.");
                 visible = false;
             }
             else if (i >= maxVisibleIndex)
             {
-                L.Verbose($"Hiding lobby bar at slot {i} since it is above the maximum visible index {maxVisibleIndex}.");
+                //L.Verbose($"Hiding lobby bar at slot {i} since it is above the maximum visible index {maxVisibleIndex}.");
                 visible = false;
             }
             else if (i >= playerSlots.Count || playerSlots[i].player == null)
             {
-                L.Verbose($"Hiding extra slot {i} since we don't have a player in that slot.");
+                //L.Verbose($"Hiding extra slot {i} since we don't have a player in that slot.");
                 visible = false;
             }
 
@@ -145,39 +106,55 @@ public static class CM_PageExpeditionSuccessPatch
         }
     }
 
-    public static string buttonLabel = "SWITCH LOBBIES";
-    public static Vector3 buttonPosition = new(350, -540, 50);
-    public static Vector3 buttonScale = new(0.5f, 0.5f, 0);
-    public static CM_Item switchbutton;
+    private static readonly Pagination _pagination = new();
+
+    private static void OnPageChanged()
+    {
+        L.Verbose("Updating visible player reports.");
+        UpdateVisiblePlayerReports(MainMenuGuiLayer.Current.PageExpeditionSuccess);
+        UpdateCustomButtons();
+    }
+
+    private static CM_Item _buttonPageUp = null!;
+    private static CM_Item _buttonPageDown = null!;
+
+    private static void UpdateCustomButtons()
+    {
+        var canPageDown = _pagination.CanPageDown();
+        var canPageUp = _pagination.CanPageUp();
+
+        _buttonPageDown.SetCoolButtonEnabled(canPageDown);
+        _buttonPageUp.SetCoolButtonEnabled(canPageUp);
+    }
 
     [HarmonyPatch(nameof(CM_PageExpeditionSuccess.Setup))]
     [HarmonyPostfix]
     public static void Setup__Postfix(CM_PageExpeditionSuccess __instance, MainMenuGuiLayer guiLayer)
     {
-        // Why does this class use GuiAnchor.TopLeft and the other uses GuiAnchor.TopCenter?
-        var switchButton = __instance.m_guiLayer.AddRectComp(guiLayer.PageLoadout.m_readyButtonPrefab, GuiAnchor.TopLeft,
-            new Vector2(200f, 20f), __instance.m_btnLeaveExpedition.transform).TryCast<CM_Item>();
-        switchButton.SetText(buttonLabel);
-        switchButton.gameObject.transform.position = buttonPosition;
-        switchButton.gameObject.SetActive(true);
-        switchButton.SetVisible(true);
+        _pagination.OnPageChanged += OnPageChanged;
 
-        Action<int> value = delegate (int id)
+        CoroutineManager.StartCoroutine(CoroutineHelpers.NextFrame(() =>
         {
-            var maxPageIndex = (int)Math.Ceiling(PluginConfig.MaxPlayers / 4.0d) - 1;
-            if (PageIndex == 0)
-            {
-                PageIndex += 1;
-                UpdateVisiblePlayerReports(__instance);
-            }
-            else if (PageIndex == 1)
-            {
-                PageIndex -= 1;
-                UpdateVisiblePlayerReports(__instance);
-            }
-        };
-        switchButton.OnBtnPressCallback += value;
+            _buttonPageUp = CoolButton.InstantiateSquareButton(__instance.m_btnLeaveExpedition.transform,
+                new Vector3(320, 42, 0), hideText: true, displayArrow: true);
 
-        switchbutton = switchButton;
+            _buttonPageDown = CoolButton.InstantiateSquareButton(__instance.m_btnLeaveExpedition.transform,
+                new Vector3(-320, 42, 0), hideText: true, displayArrow: true, flipArrow: true);
+
+            UpdateCustomButtons();
+
+            _buttonPageUp.OnBtnPressCallback = new Action<int>(_ =>
+            {
+                _pagination.PageUp();
+            });
+
+            _buttonPageDown.OnBtnPressCallback = new Action<int>(_ =>
+            {
+                _pagination.PageDown();
+            });
+
+        }).WrapToIl2Cpp());
     }
+
+
 }

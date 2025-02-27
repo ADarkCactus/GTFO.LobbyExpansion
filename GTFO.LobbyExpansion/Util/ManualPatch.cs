@@ -24,7 +24,7 @@ public abstract class ManualPatch
             if (signatureAddress == 0)
                 throw new PatchingException($"Could not find pattern for patch \"{patch.Description}\".");
 
-            var patchAddress = signatureAddress + patch.Offset; 
+            var patchAddress = signatureAddress + patch.Offset;
 
             if (PatchedAddresses.Contains(patchAddress))
             {
@@ -41,12 +41,14 @@ public abstract class ManualPatch
 
     protected abstract void SetupPatches();
 
+    protected const byte NOP = 0x90;
+
     protected static byte[] GenerateNop(int count)
     {
-        if (count < 0)
+        if (count <= 0)
             throw new ArgumentException("Count must be greater than 0.", nameof(count));
 
-        return Enumerable.Repeat((byte)0x90, count).ToArray();
+        return Enumerable.Repeat(NOP, count).ToArray();
     }
 
     protected record Patch

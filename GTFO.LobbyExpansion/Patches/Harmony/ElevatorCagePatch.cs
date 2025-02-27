@@ -17,24 +17,24 @@ public static class ElevatorCagePatch
         L.LogExecutingMethod($"{nameof(playerId)}: {playerId}");
 
         // We need to extend this for other parts of the game's code.
-        if (__instance.m_seatsFromShaft.Length < PluginConfig.MaxPlayers)
-        {
-            L.Verbose($"Expanding {nameof(__instance.m_seatsFromShaft)} size from {__instance.m_seatsFromShaft.Length} to {PluginConfig.MaxPlayers}.");
-            var original = __instance.m_seatsFromShaft;
-            __instance.m_seatsFromShaft = new Il2CppReferenceArray<ElevatorSeat>(PluginConfig.MaxPlayers);
+        // if (__instance.m_seatsFromShaft.Length < PluginConfig.MaxPlayers)
+        // {
+        //     L.Verbose($"Expanding {nameof(__instance.m_seatsFromShaft)} size from {__instance.m_seatsFromShaft.Length} to {PluginConfig.MaxPlayers}.");
+        //     var original = __instance.m_seatsFromShaft;
+        //     __instance.m_seatsFromShaft = new Il2CppReferenceArray<ElevatorSeat>(PluginConfig.MaxPlayers);
+        //
+        //     for (var x = 0; x < original.Length; x++)
+        //     {
+        //         var seat = x % 4; //x > 3 ? 0 : x;
+        //         __instance.m_seatsFromShaft[x] = original[seat];
+        //     }
+        // }
 
-            for (var x = 0; x < original.Length; x++)
-            {
-                var seat = x % 4; //x > 3 ? 0 : x;
-                __instance.m_seatsFromShaft[x] = original[seat];
-            }
-        }
-
-        if (playerId >= __instance.m_seatsFromShaft.Length)
-        {
-            L.Warning($"playerId {playerId} is past seats from shaft length: skipping call.");
-            return HarmonyControlFlow.DontExecute;
-        }
+        // if (playerId >= __instance.m_seatsFromShaft.Length)
+        // {
+        //     L.Warning($"playerId {playerId} is past seats from shaft length: skipping call.");
+        //     return HarmonyControlFlow.DontExecute;
+        // }
 
         if (__instance.m_seatsFromShaft[playerId] == null)
         {

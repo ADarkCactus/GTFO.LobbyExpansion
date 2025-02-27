@@ -2,6 +2,7 @@ using HarmonyLib;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Player;
 using UnityEngine;
+using Random = System.Random;
 
 namespace GTFO.LobbyExpansion.Patches.Harmony;
 
@@ -60,6 +61,13 @@ public static class PlayerManagerPatch
         FixPlayerColors(__instance!);
     }
 
+    private static readonly Random _random = new(690420);
+    private static Color GenerateSeededRandomColor(float saturation = 0.8f, float value = 0.8f)
+    {
+        var hue = _random.NextSingle();
+        return Color.HSVToRGB(hue, saturation, value);
+    }
+
     private static void FixPlayerColors(PlayerManager __instance)
     {
         var extraColors = new[]
@@ -75,7 +83,13 @@ public static class PlayerManagerPatch
 
         for (var i = 0; i < PluginConfig.MaxPlayers; i++)
         {
-            var color = i < original.Length ? original[i] : extraColors[i % extraColors.Length];
+            var color = i switch
+            {
+                < 4 => original[i],
+                < 8 => extraColors[i % 4],
+                _ => GenerateSeededRandomColor()
+            };
+
             L.Verbose($"Setting new player color at index #{i} to {color}.");
             __instance.m_playerColors[i] = color;
         }

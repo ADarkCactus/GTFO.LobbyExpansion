@@ -19,25 +19,24 @@ internal static class L
         }
     }
 
+    [Conditional("DEBUG")]
     internal static void DebugWarning(object data)
     {
-#if DEBUG
         Warning("-------------------------------------------");
         Warning("-------------- DEBUG WARNING --------------");
         Warning(Format(data));
         Warning("-------------------------------------------");
-#endif
     }
 
+    [Conditional("DEBUG")]
     internal static void Debug(object data)
     {
-#if DEBUG
         Logger.LogDebug(Format(data));
-#endif
     }
 
     internal static void Info(object data) => Logger.LogMessage(Format(data));
 
+    [Conditional("DEBUG")]
     internal static void Verbose(object data) => Logger.LogDebug(Format(data));
 
     internal static void Error(object data) => Logger.LogError(Format(data));
@@ -46,6 +45,7 @@ internal static class L
 
     internal static void Warning(object data) => Logger.LogWarning(Format(data));
 
+    [Conditional("DEBUG")]
     internal static void LogExecutingMethod(string? parameterInfo = "")
     {
         var executingMethod = new StackFrame(1, false).GetMethod();

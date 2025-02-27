@@ -9,7 +9,7 @@ public class DefaultCharacterLayoutsPatch
     [HarmonyPrefix]
     public static bool GetDefaultVanityItems__Prefix(ref int characterIndex)
     {
-        L.LogExecutingMethod($"{nameof(characterIndex)}: {characterIndex}");
+        //L.LogExecutingMethod($"{nameof(characterIndex)}: {characterIndex}");
 
         if (characterIndex > 3)
         {
