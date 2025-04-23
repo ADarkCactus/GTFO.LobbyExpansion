@@ -31,3 +31,25 @@ public class ElevatorSeatPatch
         _frame = currentFrame;
     }
 }
+
+[HarmonyPatch(typeof(ElevatorSeat._PreReleaseSequence_d__33))]
+public class ElevatorSeatPatchTwo
+{
+    private static ElevatorSeat _localSeat = null!;
+
+    [HarmonyPatch(nameof(ElevatorSeat._PreReleaseSequence_d__33.MoveNext))]
+    [HarmonyPostfix]
+    [HarmonyWrapSafe]
+    public static void ElevatorSeat___PreReleaseSequence_d__33__MoveNext__Postfix(ElevatorSeat._PreReleaseSequence_d__33 __instance)
+    {
+        if (__instance.isLocal)
+        {
+            _localSeat = __instance.__4__this;
+        }
+
+        if (__instance.__4__this.Pointer == _localSeat.Pointer)
+        {
+            __instance.isLocal = true;
+        }
+    }
+}
