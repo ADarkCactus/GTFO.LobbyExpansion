@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using BepInEx.Logging;
 
 namespace GTFO.LobbyExpansion;
@@ -9,7 +10,7 @@ internal static class L
 
     static L() => BepInEx.Logging.Logger.Sources.Add(Logger);
 
-    internal static void Assert(bool condition, object data)
+    internal static void Assert([DoesNotReturnIf(false)] bool condition, object data)
     {
         if (!condition)
         {

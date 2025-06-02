@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using BepInEx;
 using BepInEx.Unity.IL2CPP;
+using GTFO.LobbyExpansion.Compatibility;
 using GTFO.LobbyExpansion.Patches.Manual;
 using GTFO.LobbyExpansion.Util;
 using HarmonyLib;
@@ -8,6 +9,8 @@ using HarmonyLib;
 namespace GTFO.LobbyExpansion;
 
 [BepInPlugin(PluginInfo.Guid, PluginInfo.Name, PluginInfo.Version)]
+[BepInDependency(ChatterRebornPatch.PluginGuid, BepInDependency.DependencyFlags.SoftDependency)]
+[BepInDependency(PacksHelperPatch.PluginGuid, BepInDependency.DependencyFlags.SoftDependency)]
 public class Plugin : BasePlugin
 {
     private Harmony _harmony = null!;
@@ -108,6 +111,48 @@ public class Plugin : BasePlugin
             L.Fatal("An error occurred while applying patches:");
             L.Fatal(e);
             return;
+        }
+
+#if DEBUG
+        // TODO: Remove this later, just helps find it easier in BepInEx console
+        L.Warning("------------------------------------------------------");
+        L.Warning("------------------------------------------------------");
+        L.Warning("------------------------------------------------------");
+        L.Warning("------------------------------------------------------");
+        L.Warning("--------- Applying mod compatibility patches. --------");
+        L.Warning("------------------------------------------------------");
+        L.Warning("------------------------------------------------------");
+        L.Warning("------------------------------------------------------");
+        L.Warning("------------------------------------------------------");
+#endif
+
+        var modCompatibilityPatches = new List<ModCompatibilityPatch>()
+        {
+            new PacksHelperPatch(),
+            ChatterRebornPatch.Instance
+        };
+
+        foreach (var patch in modCompatibilityPatches)
+        {
+            var patchName = patch.GetType().Name;
+
+            try
+            {
+                if (!patch.ShouldApply())
+                {
+                    L.Verbose($"Skipping initialization of {patchName} since the patch deemed it shouldn't be applied.");
+                    return;
+                }
+
+                L.Info($"Applying mod compatibility patch {patchName}.");
+                patch.Apply(_harmony);
+            }
+            catch (Exception e)
+            {
+                L.Fatal($"An error occurred while applying mod compatibility patch {patchName}:");
+                L.Fatal(e);
+                return;
+            }
         }
 
         L.Info($"Loaded plugin {PluginInfo.Name}.");
