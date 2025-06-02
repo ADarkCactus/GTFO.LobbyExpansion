@@ -6,6 +6,7 @@ namespace GTFO.LobbyExpansion.Patches.Harmony;
 public class DefaultCharacterLayoutsPatch
 {
     [HarmonyPatch(nameof(DefaultCharacterLayouts.GetDefaultVanityItems))]
+    [HarmonyPriority(Priority.High)] // Priority high to fix some errors with StrikerMode.
     [HarmonyPrefix]
     public static bool GetDefaultVanityItems__Prefix(ref int characterIndex)
     {
