@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace GTFO.LobbyExpansion.Util;
 
@@ -18,6 +19,7 @@ public static class ReflectionUtil
         field.SetValue(null, value);
     }
 
+    [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
     public static Type GetRequiredTypeByName(string name, Assembly assembly)
     {
         var types = assembly.GetTypes();
