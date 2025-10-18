@@ -9,7 +9,7 @@ public abstract class ManualPatch
     protected List<Patch> Patches { get; } = [];
     protected abstract Type TargetType { get; }
 
-    public void Apply()
+    public IEnumerable<PatchingException> Apply()
     {
         SetupPatches();
 
@@ -22,7 +22,10 @@ public abstract class ManualPatch
             var signatureAddress = Memory.FindSignatureInIl2CppMethod(methodPointer, patch.Pattern, patch.ScanSize);
 
             if (signatureAddress == 0)
-                throw new PatchingException($"Could not find pattern for patch \"{patch.Description}\".");
+            {
+                yield return new PatchingException($"Could not find pattern for patch \"{patch.Description}\".", this);
+                continue;
+            }
 
             var patchAddress = signatureAddress + patch.Offset;
 
@@ -30,7 +33,8 @@ public abstract class ManualPatch
             {
                 var message = $"Patching the same address {patchAddress.ToString("X")}! Something is wrong!";
                 L.Fatal(message);
-                throw new PatchingException(message);
+                yield return new PatchingException(message, this);
+                continue;
             }
 
             L.Verbose($"Applying \"{patch.Description}\" patch at {patchAddress.ToString("X")}");

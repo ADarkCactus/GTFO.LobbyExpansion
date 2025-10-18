@@ -65,6 +65,7 @@ public class Plugin : BasePlugin
                 new CM_PageLoadoutDisplayClassManualPatch()
             };
 
+            var exceptions = new List<PatchingException>();
             foreach (var patch in manualPatches)
             {
                 var patchType = patch.GetType();
@@ -73,12 +74,24 @@ public class Plugin : BasePlugin
                 {
                     var message = $"The same patch {patchType} is being applied twice. Fix this.";
                     L.Fatal(message);
-                    throw new PatchingException(message);
+                    exceptions.Add(new PatchingException(message, patch));
+                    continue;
                 }
 
                 L.Verbose($"Applying manual patch {patch.GetType().Name}.");
-                patch.Apply();
+                exceptions.AddRange(patch.Apply());
                 appliedPatches.Add(patchType);
+            }
+
+            if (exceptions.Count > 0)
+            {
+                L.Fatal("Errors occurred while applying manual patches:");
+                foreach (var pe in exceptions)
+                {
+                    L.Fatal(pe.PatchOrigin.GetType().Name + ": " + pe.Message);
+                }
+
+                return;
             }
         }
         catch (Exception e)
