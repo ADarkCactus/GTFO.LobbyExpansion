@@ -21,7 +21,7 @@ public class SNet_PlayerSlotManagerManualPatch : ManualPatch
                  */
                 Method = nameof(SNet_PlayerSlotManager.Internal_ManageSlot),
                 Description = "Adjust Internal_ManageSlot hardcoded iteration of 4.",
-                Pattern = "83 FF 04 0F 8C D1 FE FF FF",
+                Pattern = "83 FF 04 0F 8C 95 FE FF FF",
                 Offset = 2,
                 Bytes = [PluginConfig.MaxPlayers]
             },

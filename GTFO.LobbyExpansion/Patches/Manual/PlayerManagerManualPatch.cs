@@ -19,7 +19,7 @@ public class PlayerManagerManualPatch : ManualPatch
                  */
                 Method = nameof(PlayerManager.SpawnBot),
                 Description = "Remove SpawnBot hardcoded limit of 4.",
-                Pattern = "83 78 18 04 0F 84 C0 03 00 00",
+                Pattern = "83 78 18 04 0F 84 9D 03 00 00",
                 Offset = 4,
                 Bytes = GenerateNop(6)
             },

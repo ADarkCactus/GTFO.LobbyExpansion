@@ -14,7 +14,7 @@ public class PlayerAgentManualPatch : ManualPatch
             {
                 Method = nameof(PlayerAgent.Setup),
                 Description = "Remove characterID limit in PlayerAgent::Setup",
-                Pattern = "0F 87 12 10 00 00",
+                Pattern = "0F 87 2C 10 00 00",
                 Offset = 0,
                 Bytes = GenerateNop(6)
             },
@@ -22,7 +22,7 @@ public class PlayerAgentManualPatch : ManualPatch
             {
                 Method = nameof(PlayerAgent.Setup),
                 Description = "Remove characterID >= m_modelsForSync length in PlayerAgent::Setup since m_modelsForSync isn't used anyway",
-                Pattern = "44 3B 70 18 0F 8D F8 0F 00 00",
+                Pattern = "44 3B 70 18 0F 8D 12 10 00 00",
                 Offset = 4,
                 Bytes = GenerateNop(6)
             }
