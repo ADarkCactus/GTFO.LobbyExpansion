@@ -20,6 +20,7 @@ public static class DramaManagerPatch
     {
         L.LogExecutingMethod();
         ResetDramaFieldsProperly();
+        CP_Bioscan_HudPatch.OnLevelCleanup();
     }
 
     private static void ResetDramaFieldsProperly()

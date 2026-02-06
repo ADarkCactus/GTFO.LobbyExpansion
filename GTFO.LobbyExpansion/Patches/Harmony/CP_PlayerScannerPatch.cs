@@ -25,4 +25,24 @@ public static class CP_PlayerScannerPatch
 
         return HarmonyControlFlow.Execute;
     }
+
+    [HarmonyPatch(nameof(CP_PlayerScanner.CanGoFaster))]
+    [HarmonyPrefix]
+    public static bool CanGoFaster__Prefix(
+        CP_PlayerScanner __instance,
+        int nrOccupiers,
+        ref bool __result)
+    {
+        // Clamp nrOccupiers to valid array bounds to prevent index out of range
+        var maxIndex = __instance.m_scanSpeeds.Length - 1;
+
+        if (__instance.m_reqItemsEnabled || nrOccupiers >= maxIndex || nrOccupiers >= PluginConfig.MaxPlayers)
+        {
+            __result = false;
+            return HarmonyControlFlow.DontExecute;
+        }
+
+        __result = nrOccupiers == 0 || __instance.m_scanSpeeds[nrOccupiers - 1] < __instance.m_scanSpeeds[nrOccupiers];
+        return HarmonyControlFlow.DontExecute;
+    }
 }
