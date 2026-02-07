@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using ChainedPuzzles;
 using HarmonyLib;
 using Player;
-using SNetwork;
 
 namespace GTFO.LobbyExpansion.Patches.Harmony;
 
@@ -34,8 +33,8 @@ public static class CP_Bioscan_CorePatch
         if (status != eBioscanStatus.Scanning)
             return;
 
-        // Fix travel scan movement - only on master (clients receive synced state)
-        if (SNet.IsMaster && __instance.IsMovable)
+        // Fix travel scan movement for >4 players
+        if (__instance.IsMovable)
         {
             var movingComp = __instance.m_movingComp;
 
