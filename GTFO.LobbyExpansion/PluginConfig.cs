@@ -11,6 +11,8 @@ public static class PluginConfig
     private const string CONFIG_FILE_NAME = $"{nameof(LobbyExpansionConfig)}.json";
     private const string USER_CONFIG_FILE_NAME = $"{nameof(LobbyExpansionConfig)}_UserData.json";
 
+    public static readonly List<string> DEFAULT_BIOSCAN_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H"];
+
     private static readonly JsonSerializerOptions _serializerOptions = new()
     {
         WriteIndented = true,
@@ -38,6 +40,7 @@ public static class PluginConfig
 
         _configUserData.SlotPermissions ??= new();
         _configUserData.CustomExtraBotNames ??= new();
+        _configUserData.BioscanLetters ??= DEFAULT_BIOSCAN_LETTERS;
     }
 
     private static void LoadCustomPlayerCount()
@@ -100,5 +103,32 @@ public static class PluginConfig
             7 => "Maddox",
             _ => $"Prisoner{characterIndex}"
         };
+    }
+
+    public static string GetBioscanLetter(int index)
+    {
+        var letters = _configUserData.BioscanLetters;
+
+        if (letters != null && letters.Count > 0 && index >= 0 && index < letters.Count)
+            return letters[index];
+
+        if (index < DEFAULT_BIOSCAN_LETTERS.Count)
+            return DEFAULT_BIOSCAN_LETTERS[index];
+
+        return ((char)('A' + index)).ToString();
+    }
+
+    private static string[]? _bioscanLettersCache;
+
+    public static string[] GetBioscanLetters()
+    {
+        if (_bioscanLettersCache != null)
+            return _bioscanLettersCache;
+
+        _bioscanLettersCache = new string[MaxPlayers];
+        for (var i = 0; i < MaxPlayers; i++)
+            _bioscanLettersCache[i] = GetBioscanLetter(i);
+
+        return _bioscanLettersCache;
     }
 }

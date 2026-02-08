@@ -12,4 +12,5 @@ public class LobbyExpansionConfig
 {
     public Dictionary<int, SNet_PlayerSlotManager.SlotPermission>? SlotPermissions { get; set; } = new();
     public List<string>? CustomExtraBotNames { get; set; } = new();
+    public List<string>? BioscanLetters { get; set; } = PluginConfig.DEFAULT_BIOSCAN_LETTERS;
 }
